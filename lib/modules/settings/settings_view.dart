@@ -3,6 +3,11 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../data/providers/local_database.dart';
+import '../products/products_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/services/currency_service.dart';
 import '../../core/services/perfume_formula_service.dart';
@@ -77,6 +82,113 @@ class SettingsController extends GetxController {
       margin: const EdgeInsets.all(16),
     );
   }
+
+  Future<void> exportDatabase() async {
+    try {
+      final dbPath = await LocalDatabase.instance.getDatabasePath();
+      final dbFile = File(dbPath);
+
+      if (!await dbFile.exists()) {
+        Get.snackbar(
+          'خطأ',
+          'لا يوجد قاعدة بيانات لتصديرها!',
+          backgroundColor: AppColors.error,
+          colorText: AppColors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+        return;
+      }
+
+      if (Platform.isWindows || Platform.isMacOS) {
+        final downloadsDir = await getDownloadsDirectory();
+        if (downloadsDir != null) {
+          final backupPath = '${downloadsDir.path}/luxury_pos_backup.db';
+          await dbFile.copy(backupPath);
+          Get.snackbar(
+            'نجاح التصدير',
+            'تم تصدير النسخة الاحتياطية بنجاح إلى مجلد التنزيلات:\n$backupPath',
+            backgroundColor: AppColors.success,
+            colorText: AppColors.white,
+            duration: const Duration(seconds: 5),
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(16),
+          );
+        } else {
+          final result = await FilePicker.platform.saveFile(
+            dialogTitle: 'احفظ قاعدة البيانات',
+            fileName: 'luxury_pos_backup.db',
+          );
+          if (result != null) {
+            await dbFile.copy(result);
+            Get.snackbar(
+              'نجاح التصدير',
+              'تم حفظ النسخة الاحتياطية بنجاح!',
+              backgroundColor: AppColors.success,
+              colorText: AppColors.white,
+              snackPosition: SnackPosition.BOTTOM,
+              margin: const EdgeInsets.all(16),
+            );
+          }
+        }
+      } else {
+        final xFile = XFile(dbPath, mimeType: 'application/x-sqlite3', name: 'luxury_pos_backup.db');
+        await Share.shareXFiles([xFile], text: 'نسخة احتياطية لقاعدة بيانات العطور');
+      }
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'حدث خطأ أثناء تصدير البيانات: $e',
+        backgroundColor: AppColors.error,
+        colorText: AppColors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+  }
+
+  Future<void> importDatabase() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        final path = result.files.single.path!;
+        await LocalDatabase.instance.importDatabaseFromFile(path);
+
+        // Reload data if ProductsController is registered
+        try {
+          if (Get.isRegistered<ProductsController>()) {
+            await Get.find<ProductsController>().loadProducts();
+          }
+        } catch (_) {}
+
+        Get.defaultDialog(
+          title: 'نجاح الاستيراد',
+          backgroundColor: AppColors.black,
+          titleStyle: const TextStyle(color: AppColors.gold),
+          middleText: 'تم استيراد قاعدة البيانات وتحديثها بنجاح دون الحاجة لإعادة تشغيل التطبيق!',
+          middleTextStyle: const TextStyle(color: AppColors.white),
+          textConfirm: 'رائع',
+          buttonColor: AppColors.gold,
+          confirmTextColor: AppColors.black,
+          onConfirm: () {
+            Get.back();
+          }
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'حدث خطأ أثناء استيراد البيانات: $e',
+        backgroundColor: AppColors.error,
+        colorText: AppColors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+  }
 }
 
 class SettingsView extends GetView<SettingsController> {
@@ -114,6 +226,8 @@ class SettingsView extends GetView<SettingsController> {
             ),
             const SizedBox(height: 24),
             _buildCapacityPresetsCard(context),
+            const SizedBox(height: 24),
+            _buildBackupRestoreCard(context),
             const SizedBox(height: 32),
             SizedBox(
               width: 200,
@@ -484,6 +598,77 @@ class SettingsView extends GetView<SettingsController> {
           Get.back();
         }
       }
+    );
+  }
+
+  Widget _buildBackupRestoreCard(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.cloud_sync, color: AppColors.gold, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  'النسخ الاحتياطي واستيراد البيانات (Sync Data)',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'يمكنك تصدير قاعدة بيانات العطور والأسعار بالكامل من جهاز الكمبيوتر واستيرادها مباشرة على الآيباد لتوفير الوقت وسرعة مزامنة بياناتك بضغطة زر واحدة.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.grey,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: controller.exportDatabase,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.gold,
+                    foregroundColor: AppColors.black,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.upload, size: 22),
+                  label: const Text(
+                    'تصدير نسخة احتياطية (Export)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: controller.importDatabase,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.deepBlack,
+                    foregroundColor: AppColors.gold,
+                    side: const BorderSide(color: AppColors.gold, width: 1.5),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.download, size: 22),
+                  label: const Text(
+                    'استيراد نسخة احتياطية (Import)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

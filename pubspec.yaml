@@ -49,6 +49,8 @@ dependencies:
   http: ^1.6.0
   path: ^1.9.1
   image_picker: ^1.2.2
+  file_picker: ^8.1.2
+  share_plus: ^10.1.0
   sqflite_common_ffi: ^2.4.0+3
 
 dev_dependencies:

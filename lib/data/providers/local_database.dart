@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'dart:io';
 
 class LocalDatabase {
   static final LocalDatabase instance = LocalDatabase._init();
@@ -114,8 +115,34 @@ CREATE TABLE sales (
     }
   }
 
+  Future<String> getDatabasePath() async {
+    final dbPath = await getDatabasesPath();
+    return join(dbPath, 'luxury_pos.db');
+  }
+
+  Future<void> closeDb() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
+  }
+
+  Future<void> importDatabaseFromFile(String sourcePath) async {
+    await closeDb();
+    final dbPath = await getDatabasePath();
+    final sourceFile = File(sourcePath);
+    if (await sourceFile.exists()) {
+      // Overwrite the existing local database
+      await sourceFile.copy(dbPath);
+      // Re-initialize database
+      _database = await _initDB('luxury_pos.db');
+      await _ensureColumnsExist(_database!);
+    } else {
+      throw Exception('Source database file not found');
+    }
+  }
+
   Future<void> close() async {
-    final db = await instance.database;
-    db.close();
+    await closeDb();
   }
 }
