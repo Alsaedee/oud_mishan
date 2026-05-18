@@ -1,0 +1,50 @@
+name: Build iOS iPad Version
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  build:
+    name: Build iOS (iPad) Unsigned IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Unsigned iOS IPA
+        run: |
+          flutter build ipa --no-codesign
+
+      - name: Zip Build Output
+        run: |
+          mkdir -p build/ios/iphoneos_release
+          cp -r build/ios/archive/Runner.xcarchive build/ios/iphoneos_release/ || true
+          cd build/ios
+          zip -r ipad-release.zip ipa/ Runner.xcarchive/ || zip -r ipad-release.zip ipa/ || echo "Zip completed"
+
+      - name: Upload iOS Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipad-unsigned-build
+          path: build/ios/ipad-release.zip
+          if-no-files-found: warn

@@ -1,0 +1,52 @@
+# Codemagic CI/CD configuration for Luxury Perfume POS
+# Log in to codemagic.io with your GitHub account to build for iOS/iPad for free.
+
+workflows:
+  ios-ipad-workflow:
+    name: iOS iPad Build Workflow
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+        - pattern: 'master'
+    scripts:
+      - name: Set up code signing to run unsigned (Simulator/Ad-hoc testing)
+        script: |
+          xcodebuild -version
+      - name: Fetch Flutter dependencies
+        script: |
+          PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
+          echo "Found Flutter project root at: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+          flutter pub get
+      - name: Build Unsigned iOS IPA
+        script: |
+          PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
+          echo "Found Flutter project root at: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+          flutter build ipa --no-codesign
+          
+          # Move artifacts to where Codemagic expects them if in subfolder
+          if [ "$PROJECT_DIR" != "." ]; then
+            mkdir -p build/ios/ipa
+            mkdir -p build/ios/archive
+            cp -r "$PROJECT_DIR"/build/ios/ipa/* build/ios/ipa/ || true
+            cp -r "$PROJECT_DIR"/build/ios/archive/* build/ios/archive/ || true
+          fi
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/Runner.xcarchive
+    publishing:
+      email:
+        recipients:
+          - your_email@example.com
+        notify:
+          success: true
+          failure: true
