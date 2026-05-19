@@ -547,7 +547,7 @@ class POSController extends GetxController {
     final double bHeight = prefs.getDouble('barcodeHeight') ?? 30.0;
     final double fSize = prefs.getDouble('barcodeFontSize') ?? 10.0;
     final String align = prefs.getString('barcodeAlignment') ?? 'Center';
-    final String shopName = prefs.getString('shopName') ?? 'Luxury Perfume POS';
+    final String shopName = prefs.getString('shopName') ?? 'عود ميشان';
 
     // Convert mm to points (1 mm = 2.83465 points)
     final double widthPt = bWidth * 2.83465;

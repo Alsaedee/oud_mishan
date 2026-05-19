@@ -13,6 +13,8 @@ import '../modules/customers/customers_view.dart';
 import '../modules/reports/reports_view.dart';
 import '../modules/financial/financial_view.dart';
 import '../modules/secrets/secrets_view.dart';
+import '../modules/activation/activation_view.dart';
+import '../modules/admin_license/admin_license_view.dart';
 
 part 'app_routes.dart';
 
@@ -67,6 +69,14 @@ class AppPages {
     GetPage(
       name: Routes.SETTINGS,
       page: () => const SettingsView(),
+    ),
+    GetPage(
+      name: Routes.ACTIVATION,
+      page: () => const ActivationView(),
+    ),
+    GetPage(
+      name: Routes.ADMIN_LICENSE,
+      page: () => const AdminLicenseView(),
     ),
   ];
 }

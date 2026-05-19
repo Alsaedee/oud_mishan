@@ -188,14 +188,35 @@ class DashboardView extends GetView<DashboardController> {
       backgroundColor: AppColors.black,
       child: ListView(
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(gradient: AppColors.luxuryGradient),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          DrawerHeader(
+            decoration: const BoxDecoration(gradient: AppColors.luxuryGradient),
+            child: Row(
               children: [
-                Icon(Icons.spa, size: 48, color: AppColors.white),
-                SizedBox(height: 16),
-                Text('Luxury POS', style: TextStyle(color: AppColors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.white, width: 1.5),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.spa, size: 36, color: AppColors.white),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('عود ميشان', style: TextStyle(color: AppColors.white, fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Cairo')),
+                    Text('Oud Mishan POS', style: TextStyle(color: AppColors.lightGrey, fontSize: 12)),
+                  ],
+                ),
               ],
             ),
           ),
@@ -208,6 +229,55 @@ class DashboardView extends GetView<DashboardController> {
           _drawerItem('🔐 الخلطات السرية', Icons.lock, () => Get.toNamed(Routes.SECRETS)),
           _drawerItem('التقارير', Icons.bar_chart, () => Get.toNamed(Routes.REPORTS)),
           _drawerItem('الإعدادات', Icons.settings, () => Get.toNamed(Routes.SETTINGS)),
+          _drawerItem('توليد التراخيص (المدير)', Icons.vpn_key, () {
+            final passcodeController = TextEditingController();
+            Get.defaultDialog(
+              title: 'دخول المدير والمهندس',
+              backgroundColor: AppColors.black,
+              titleStyle: const TextStyle(color: AppColors.gold),
+              content: Column(
+                children: [
+                  const Text(
+                    'الرجاء إدخال رمز مرور المدير لتسجيل الدخول للوحة توليد التراخيص:',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.white, fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: passcodeController,
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.white, fontSize: 22, letterSpacing: 6),
+                    decoration: const InputDecoration(
+                      hintText: '••••',
+                      hintStyle: TextStyle(color: AppColors.grey),
+                    ),
+                  ),
+                ],
+              ),
+              textConfirm: 'دخول للوحة',
+              textCancel: 'إلغاء',
+              buttonColor: AppColors.gold,
+              confirmTextColor: AppColors.black,
+              cancelTextColor: AppColors.grey,
+              onConfirm: () {
+                final enteredCode = passcodeController.text;
+                if (enteredCode == '07803240403' || enteredCode == '2026' || enteredCode == '1234') {
+                  Get.back();
+                  passcodeController.clear();
+                  Get.toNamed(Routes.ADMIN_LICENSE);
+                } else {
+                  Get.snackbar(
+                    'خطأ ❌',
+                    'رمز المرور غير صحيح!',
+                    backgroundColor: AppColors.error,
+                    colorText: AppColors.white,
+                  );
+                }
+              },
+            );
+          }),
         ],
       ),
     );

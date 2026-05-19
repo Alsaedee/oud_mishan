@@ -9,6 +9,7 @@ import 'core/services/currency_service.dart';
 import 'core/services/exchange_rate_service.dart';
 import 'core/services/perfume_formula_service.dart';
 import 'core/services/fragrance_search_service.dart';
+import 'core/services/activation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +19,7 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
+  await Get.putAsync(() => ActivationService().init());
   await Get.putAsync(() => CurrencyService().init());
   await Get.putAsync(() => ExchangeRateService().init());
   await Get.putAsync(() => PerfumeFormulaService().init());
@@ -38,7 +40,7 @@ class LuxuryPerfumeApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return GetMaterialApp(
-          title: 'Luxury Perfume POS',
+          title: 'برنامج عود ميشان',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,

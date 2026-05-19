@@ -17,4 +17,6 @@ abstract class Routes {
   static const EMPLOYEES = '/employees';
   static const SECRETS = '/secrets';
   static const SETTINGS = '/settings';
+  static const ACTIVATION = '/activation';
+  static const ADMIN_LICENSE = '/admin-license';
 }

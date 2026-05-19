@@ -11,9 +11,11 @@ import '../products/products_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/services/currency_service.dart';
 import '../../core/services/perfume_formula_service.dart';
+import '../../core/services/activation_service.dart';
+import '../../routes/app_pages.dart';
 
 class SettingsController extends GetxController {
-  final shopNameController = TextEditingController(text: 'Luxury Perfume');
+  final shopNameController = TextEditingController(text: 'عود ميشان');
   final selectedCurrency = 'SAR (ر.س)'.obs;
   final Rx<File?> shopLogo = Rx<File?>(null);
 
@@ -37,7 +39,7 @@ class SettingsController extends GetxController {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    shopNameController.text = prefs.getString('shopName') ?? 'Luxury Perfume';
+    shopNameController.text = prefs.getString('shopName') ?? 'عود ميشان';
     selectedCurrency.value = prefs.getString('currency') ?? 'SAR (ر.س)';
     barcodeWidth.value = prefs.getDouble('barcodeWidth') ?? 50.0;
     barcodeHeight.value = prefs.getDouble('barcodeHeight') ?? 30.0;
@@ -228,6 +230,8 @@ class SettingsView extends GetView<SettingsController> {
             _buildCapacityPresetsCard(context),
             const SizedBox(height: 24),
             _buildBackupRestoreCard(context),
+            const SizedBox(height: 24),
+            _buildDeveloperAndLicenseCard(context),
             const SizedBox(height: 32),
             SizedBox(
               width: 200,
@@ -663,6 +667,242 @@ class SettingsView extends GetView<SettingsController> {
                     'استيراد نسخة احتياطية (Import)',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeveloperAndLicenseCard(BuildContext context) {
+    final activationService = Get.find<ActivationService>();
+    final passcodeController = TextEditingController();
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.verified_user, color: AppColors.gold, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  'معلومات الترخيص والتطوير',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Developer Info Column
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'مطور النظام والبرنامج:',
+                        style: TextStyle(color: AppColors.grey, fontSize: 13),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'تم برمجة و تنفيذ هذا البرنامج بواسطة محمد مهدي الساعدي',
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.phone, color: AppColors.success, size: 20),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'رقم التواصل: ',
+                            style: TextStyle(color: AppColors.grey, fontSize: 14),
+                          ),
+                          Text(
+                            '07803240403',
+                            style: const TextStyle(
+                              color: AppColors.success,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Row(
+                        children: [
+                          Icon(Icons.location_on, color: AppColors.error, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'العنوان: العراق - العمارة',
+                            style: TextStyle(color: AppColors.white, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Container(width: 1.5, height: 120, color: AppColors.darkGrey),
+                const SizedBox(width: 24),
+                // License Details Column
+                Expanded(
+                  child: Obx(() {
+                    final isAct = activationService.isActivated;
+                    final isLife = activationService.isLifetime;
+                    final expiry = activationService.expiryDate;
+                    final code = activationService.activationCode;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'تفاصيل ترخيص هذه النسخة:',
+                          style: TextStyle(color: AppColors.grey, fontSize: 13),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(
+                              isAct ? Icons.check_circle : Icons.cancel,
+                              color: isAct ? AppColors.success : AppColors.error,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isAct ? 'النسخة مفعلة ونشطة ✅' : 'النسخة غير مفعلة ❌',
+                              style: TextStyle(
+                                color: isAct ? AppColors.success : AppColors.error,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (isAct) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            isLife
+                                ? '• نوع الترخيص: ترخيص دائم مدى الحياة (Lifetime)'
+                                : '• تاريخ الانتهاء: ${expiry?.toIso8601String().substring(0, 10) ?? ""}',
+                            style: const TextStyle(color: AppColors.white, fontSize: 14),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '• كود التفعيل: $code',
+                            style: const TextStyle(color: AppColors.lightGrey, fontSize: 13, fontFamily: 'Courier'),
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            if (isAct)
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Get.defaultDialog(
+                                    title: 'إلغاء تفعيل النسخة؟',
+                                    backgroundColor: AppColors.black,
+                                    titleStyle: const TextStyle(color: AppColors.error),
+                                    middleText: 'هل أنت متأكد من إلغاء تفعيل هذا الجهاز؟ سيتوقف البرنامج عن العمل حتى تقوم بإدخال كود تفعيل صالح.',
+                                    middleTextStyle: const TextStyle(color: AppColors.white),
+                                    textConfirm: 'إلغاء التفعيل الآن',
+                                    textCancel: 'تراجع',
+                                    buttonColor: AppColors.error,
+                                    confirmTextColor: AppColors.white,
+                                    cancelTextColor: AppColors.grey,
+                                    onConfirm: () async {
+                                      await activationService.deactivate();
+                                      Get.back();
+                                      Get.offAllNamed(Routes.ACTIVATION);
+                                    },
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                                  foregroundColor: AppColors.error,
+                                  side: const BorderSide(color: AppColors.error),
+                                ),
+                                icon: const Icon(Icons.power_settings_new),
+                                label: const Text('إلغاء التفعيل'),
+                              ),
+                            const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Get.defaultDialog(
+                                  title: 'دخول المدير والمهندس',
+                                  backgroundColor: AppColors.black,
+                                  titleStyle: const TextStyle(color: AppColors.gold),
+                                  content: Column(
+                                    children: [
+                                      const Text(
+                                        'الرجاء إدخال رمز مرور المدير لتسجيل الدخول للوحة توليد التراخيص:',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(color: AppColors.white, fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      TextField(
+                                        controller: passcodeController,
+                                        obscureText: true,
+                                        keyboardType: TextInputType.number,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(color: AppColors.white, fontSize: 22, letterSpacing: 6),
+                                        decoration: const InputDecoration(
+                                          hintText: '••••',
+                                          hintStyle: TextStyle(color: AppColors.grey),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  textConfirm: 'دخول للوحة',
+                                  textCancel: 'إلغاء',
+                                  buttonColor: AppColors.gold,
+                                  confirmTextColor: AppColors.black,
+                                  cancelTextColor: AppColors.grey,
+                                  onConfirm: () {
+                                    final enteredCode = passcodeController.text;
+                                    if (enteredCode == '07803240403' || enteredCode == '2026' || enteredCode == '1234') {
+                                      Get.back();
+                                      passcodeController.clear();
+                                      Get.toNamed(Routes.ADMIN_LICENSE);
+                                    } else {
+                                      Get.snackbar(
+                                        'خطأ ❌',
+                                        'رمز المرور غير صحيح!',
+                                        backgroundColor: AppColors.error,
+                                        colorText: AppColors.white,
+                                      );
+                                    }
+                                  },
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.deepBlack,
+                                foregroundColor: AppColors.gold,
+                                side: const BorderSide(color: AppColors.gold, width: 1),
+                              ),
+                              icon: const Icon(Icons.admin_panel_settings),
+                              label: const Text('لوحة التراخيص (المدير)'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }),
                 ),
               ],
             ),
