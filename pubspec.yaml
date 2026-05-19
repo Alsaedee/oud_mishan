@@ -63,11 +63,16 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  msix: ^3.16.0
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
+msix_config:
+  display_name: عود ميشان
+  publisher_display_name: محمد مهدي الساعدي
+  title: عود ميشان
+  publisher: CN=MHD_SAADI
+  version: 1.0.0.0
+  logo_path: assets/images/logo.png
 
-# The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
   assets:
